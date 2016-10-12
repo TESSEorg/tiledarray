@@ -10,15 +10,14 @@ namespace Parsec {
     template <typename Tile, typename Policy, typename Op>
     class IrregularTiledMatrix {
     public:
-        typedef typename TiledArray::detail::DistEval<TiledArray::detail::LazyArrayTile<typename TiledArray::DistArray<Tile, Policy>::value_type, Op>, Policy> DistEval_;
-        typedef typename DistEval_::trange_type trange_type; ///< Tiled range type for this object
+        typedef typename TiledArray::detail::DistEval<Tile, Policy>::trange_type trange_type; ///< Tiled range type for this object
 
     private:
-        irregular_tiled_matrix_desc_t           _ddesc;
-        std::vector<typename DistEval_::future> _tiles;
-
+        irregular_tiled_matrix_desc_t                  _ddesc;
+        std::vector<typename TiledArray::Future<Tile>> _tiles;
+        
     public:
-        IrregularTiledMatrix(DistEval_ &de, std::size_t P) {
+        IrregularTiledMatrix(TiledArray::detail::DistEval<Tile, Policy> &de, std::size_t P) {
             trange_type tr = de.trange();
             int lm = 0;
             std::vector<std::size_t>idx;
@@ -94,7 +93,6 @@ namespace Parsec {
                 }
             }
         }
-        
         ~IrregularTiledMatrix() {
             _tiles.clear();
         }

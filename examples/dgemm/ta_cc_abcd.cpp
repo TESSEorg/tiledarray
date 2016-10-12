@@ -415,8 +415,8 @@ void tensor_contract_444(TA::DistArray<Tile, Policy>& tv,
   //
   pmap.reset(new TA::detail::BlockedPmap(world, trange_tv.tiles_range().volume()));
 
-  Parsec::IrregularTiledMatrix<Tile, Policy, TiledArray::detail::UnaryWrapper<TiledArray::Noop<Tile, true> >> ddesc_t(t_eval, 1);
-  Parsec::IrregularTiledMatrix<Tile, Policy, TiledArray::detail::UnaryWrapper<TiledArray::Noop<Tile, true> >> ddesc_v(v_eval, 1);
+  Parsec::IrregularTiledMatrix<TiledArray::detail::LazyArrayTile<Tile,array_op_type>, Policy, array_op_type>ddesc_t(t_eval, 1);
+  Parsec::IrregularTiledMatrix<TiledArray::detail::LazyArrayTile<Tile,array_op_type>, Policy, array_op_type>ddesc_v(v_eval, 1);
 
   // 'contract' object is of type
   // PaRSEC's PTG object will do the job here:
@@ -426,6 +426,7 @@ void tensor_contract_444(TA::DistArray<Tile, Policy>& tv,
       t_eval, v_eval, world, TA::DenseShape(), pmap, TA::Permutation(),
       make_contract<Tile>(4u, 4u, 4u)
       );
+  Parsec::IrregularTiledMatrix<Tile, Policy, TiledArray::detail::UnaryWrapper<TiledArray::Noop<Tile, true> >> ddesc_tv(contract, 1);
 
   // eval() just schedules the Summa task and proceeds
   // in expressions evaluation is lazy ... you could just use contract tiles
