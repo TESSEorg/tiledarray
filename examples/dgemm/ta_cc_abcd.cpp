@@ -426,7 +426,7 @@ void tensor_contract_444(TA::DistArray<Tile, Policy>& tv,
       t_eval, v_eval, world, TA::DenseShape(), pmap, TA::Permutation(),
       make_contract<Tile>(4u, 4u, 4u)
       );
-  Parsec::IrregularTiledMatrix<Tile, Policy, TiledArray::detail::UnaryWrapper<TiledArray::Noop<Tile, true> >> ddesc_tv(contract, 1);
+  Parsec::IrregularTiledMatrix<Tile, Policy, array_op_type> ddesc_tv(contract, 1);
 
   // eval() just schedules the Summa task and proceeds
   // in expressions evaluation is lazy ... you could just use contract tiles
