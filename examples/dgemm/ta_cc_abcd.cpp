@@ -21,6 +21,7 @@
 #include <tiledarray.h>
 #include <TiledArray/version.h>
 #include "parsec_wrapper.h"
+#include "parsec_summa_wrapper.h"
 #include "irregular_tiled_matrix_wrapper.h"
 
 bool to_bool(const char* str) {
