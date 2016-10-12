@@ -20,6 +20,8 @@
 #include <iostream>
 #include <tiledarray.h>
 #include <TiledArray/version.h>
+#include "parsec_wrapper.h"
+#include "irregular_tiled_matrix_wrapper.h"
 
 bool to_bool(const char* str) {
   if (not strcmp(str,"0") ||
@@ -74,6 +76,7 @@ int main(int argc, char** argv) {
 
     // Initialize runtime
     TA::World& world = TA::initialize(argc, argv);
+    Parsec::Parsec parsec;
 
     // Get command line arguments
     if (argc < 5) {
@@ -288,6 +291,7 @@ TA::detail::DistEval<typename Op::result_type, Policy> make_contract_eval(
     N *= right.range().extent(i);
     n *= right.trange().elements_range().extent(i);
   }
+  std::cout << "(M, N, m, n, num_contract_ranks) = " << M << ", " << N << ", " << m << "," << n << ", " << num_contract_ranks <<std::endl;
 
   // Compute the number of tiles in the inner dimension.
   std::size_t K = 1ul;
@@ -353,6 +357,18 @@ void rand_fill_array(TA::DistArray<Tile, Policy>& array) {
   }
 }
 
+void iterate_dimension(TiledArray::Range range, std::vector<std::size_t> &idx, int dim = 0)
+{
+    if( dim == range.rank() ) {
+        std::cout << idx << " -> " << range.ordinal(idx) << std::endl;
+        return;
+    }
+    for(int i = range.lobound_data()[dim]; i < range.upbound_data()[dim]; i++) {
+        idx[dim] = i;
+        iterate_dimension(range, idx, dim+1);
+    }
+}
+
 template <typename Tile, typename Policy>
 void tensor_contract_444(TA::DistArray<Tile, Policy>& tv,
                          const TA::DistArray<Tile, Policy>& t,
@@ -398,6 +414,10 @@ void tensor_contract_444(TA::DistArray<Tile, Policy>& tv,
   TA::TiledRange trange_tv({trange_occ, trange_occ, trange_uocc, trange_uocc});
   //
   pmap.reset(new TA::detail::BlockedPmap(world, trange_tv.tiles_range().volume()));
+
+  Parsec::IrregularTiledMatrix<Tile, Policy, TiledArray::detail::UnaryWrapper<TiledArray::Noop<Tile, true> >> ddesc_t(t_eval, 1);
+  Parsec::IrregularTiledMatrix<Tile, Policy, TiledArray::detail::UnaryWrapper<TiledArray::Noop<Tile, true> >> ddesc_v(v_eval, 1);
+
   // 'contract' object is of type
   // PaRSEC's PTG object will do the job here:
   // 1. it will use t_eval and v_eval's Futures as input

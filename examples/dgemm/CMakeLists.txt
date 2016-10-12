@@ -25,8 +25,7 @@
 # Create example executable
 
 foreach(_exec blas eigen ta_band ta_dense ta_sparse ta_dense_nonuniform
-              ta_asymm_dense ta_sparse_grow ta_dense_new_tile
-              ta_cc_abcd)
+              ta_asymm_dense ta_sparse_grow ta_dense_new_tile)
 
   # Add executable
   add_executable(${_exec} EXCLUDE_FROM_ALL ${_exec}.cpp)
@@ -35,6 +34,16 @@ foreach(_exec blas eigen ta_band ta_dense ta_sparse ta_dense_nonuniform
   add_dependencies(example ${_exec})
 
 endforeach()
+
+find_package(PARSEC COMPONENTS HWLOC MPI)
+if( PARSEC_FOUND ) 
+include_directories(".;${PARSEC_INCLUDE_DIRS_DEP}")
+add_executable(ta_cc_abcd EXCLUDE_FROM_ALL ta_cc_abcd.cpp irregular_tiled_matrix_wrapper.h parsec_wrapper.h)
+target_link_libraries(ta_cc_abcd PRIVATE tiledarray)
+target_link_libraries(ta_cc_abcd PRIVATE ${PARSEC_LIBRARIES_DEP})
+add_dependencies(ta_cc_abcd External)
+add_dependencies(example ta_cc_abcd)
+endif()
 
 if(ENABLE_ELEMENTAL)
     # Add the ta_elem_dense executable
