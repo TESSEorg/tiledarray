@@ -14,6 +14,28 @@
 
 namespace Parsec {
 
+    namespace {
+        template <typename Real>
+        void summa_destruct(dague_handle_t * handle);
+        
+        template <>
+        void summa_destruct<double>(dague_handle_t * handle) {
+            summa_dsumma_Destruct( handle );
+        }
+        template <>
+        void summa_destruct<float>(dague_handle_t * handle) {
+            summa_ssumma_Destruct( handle );
+        }
+        template <>
+        void summa_destruct<std::complex<double>>(dague_handle_t * handle) {
+            summa_zsumma_Destruct( handle );
+        }
+        template <>
+        void summa_destruct<std::complex<float>>(dague_handle_t * handle) {
+            summa_csumma_Destruct( handle );
+        }
+    }
+    
     template<typename BaseType, typename Tile, typename Policy, typename Op>
     class Summa {
     private:
@@ -39,30 +61,9 @@ namespace Parsec {
             
         }
 
-        void destruct(void) {
-#if 0
-            // How do we do that?
-            switch( BaseType ) {
-            case double:
-                summa_dsumma_Destruct( dague_handle_ );
-                break;
-            case double complex:
-                summa_zsumma_Destruct( dague_handle_ );
-                break;
-            case float:
-                summa_ssumma_Destruct( dague_handle_ );
-                break;
-            case float complex:
-                summa_csumma_Destruct( dague_handle_ );
-                break;
-            default:
-            }
-#endif
-        }
-        
         ~Summa() {
             if( NULL != dague_handle_ ) {
-                destruct();
+                summa_destruct<typename Tile::value_type>(dague_handle_);
             }
         }
     }; // class Summa
