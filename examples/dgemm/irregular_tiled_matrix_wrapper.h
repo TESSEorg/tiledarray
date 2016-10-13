@@ -93,6 +93,9 @@ namespace Parsec {
                 }
             }
         }
+
+        irregular_tiled_matrix_desc_t *desc(void) { return &_ddesc; }
+        
         ~IrregularTiledMatrix() {
             _tiles.clear();
         }

@@ -2,10 +2,38 @@
 #define PARSEC_WRAPPER_H__INCLUDED
 
 #include "dague.h"
+#include "dague/class/dague_object.h"
 
 #include <tiledarray.h>
 
 namespace Parsec {
+    class Handle {
+    protected:
+        dague_handle_t  *dague_handle_;
+        dague_context_t *dague_context_;
+        bool             handle_scheduled;
+
+    public:
+        Handle(dague_context_t *context) :
+            dague_context_(context),
+            dague_handle_(NULL),
+            handle_scheduled(false)
+        {
+        }
+
+        ~Handle() {
+            if( NULL != dague_handle_ ) {
+                /** For a reason, probably because it was not
+                 *  scheduled, the handle was not destructed by
+                 *  the specialized class. Try to memory collect
+                 *  using generic dague destructor */
+                OBJ_RELEASE(dague_handle_);
+            }
+            dague_handle_ = NULL;
+            dague_context_ = NULL;
+        }
+    };
+    
     class Parsec {
     private:
         dague_context_t *dague_context_;
@@ -31,6 +59,10 @@ namespace Parsec {
         }
         Parsec(std::vector<std::string> &v) {
             initialize(v);
+        }
+
+        dague_context_t *context(void) {
+            return dague_context_;
         }
         
         ~Parsec() {

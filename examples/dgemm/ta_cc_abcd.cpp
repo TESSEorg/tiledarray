@@ -58,7 +58,8 @@ make_tiling(unsigned int range_size,
 // as an explicit SUMMA
 // can be extended to handle permutations, etc.
 template <typename Tile, typename Policy>
-void tensor_contract_444(TA::DistArray<Tile, Policy>& tv,
+void tensor_contract_444(Parsec::Parsec &parsec,
+                         TA::DistArray<Tile, Policy>& tv,
                          const TA::DistArray<Tile, Policy>& t,
                          const TA::DistArray<Tile, Policy>& v);
 
@@ -66,7 +67,8 @@ template <typename Tile, typename Policy>
 void rand_fill_array(TA::DistArray<Tile, Policy>& array);
 
 template <typename T>
-void cc_abcd(madness::World& world,
+void cc_abcd(Parsec::Parsec &parsec,
+             madness::World& world,
              const TA::TiledRange1& trange_occ,
              const TA::TiledRange1& trange_uocc, long repeat);
 
@@ -140,9 +142,9 @@ int main(int argc, char** argv) {
     auto trange_uocc = TA::TiledRange1(tiling_uocc.begin(), tiling_uocc.end());
 
     if (use_complex)
-      cc_abcd<std::complex<double>>(world, trange_occ, trange_uocc, repeat);
+        cc_abcd<std::complex<double>>(parsec, world, trange_occ, trange_uocc, repeat);
     else
-      cc_abcd<double>(world, trange_occ, trange_uocc, repeat);
+        cc_abcd<double>(parsec, world, trange_occ, trange_uocc, repeat);
 
     TA::finalize();
 
@@ -167,7 +169,8 @@ int main(int argc, char** argv) {
 }
 
 template <typename T>
-void cc_abcd(TA::World& world,
+void cc_abcd(Parsec::Parsec &parsec,
+             TA::World& world,
              const TA::TiledRange1& trange_occ,
              const TA::TiledRange1& trange_uocc, long repeat) {
 
@@ -220,7 +223,7 @@ void cc_abcd(TA::World& world,
 
     // this demonstrates to the PaRSEC team what happens under the hood of the expression above
     if (true) {
-      tensor_contract_444(t2_v, t2, v);
+        tensor_contract_444(parsec, t2_v, t2, v);
 
       // to validate replace: false -> true
       if (do_validate) {
@@ -371,7 +374,8 @@ void iterate_dimension(TiledArray::Range range, std::vector<std::size_t> &idx, i
 }
 
 template <typename Tile, typename Policy>
-void tensor_contract_444(TA::DistArray<Tile, Policy>& tv,
+void tensor_contract_444(Parsec::Parsec &parsec,
+                         TA::DistArray<Tile, Policy>& tv,
                          const TA::DistArray<Tile, Policy>& t,
                          const TA::DistArray<Tile, Policy>& v) {
 
@@ -385,8 +389,8 @@ void tensor_contract_444(TA::DistArray<Tile, Policy>& tv,
 
   typedef TA::Noop<Tile, true> array_base_op_type;
   typedef TA::detail::UnaryWrapper<array_base_op_type> array_op_type;
-  typedef TA::detail::DistEval<TA::detail::LazyArrayTile<Tile, array_op_type>,
-      TA::DensePolicy> array_eval_type;
+  typedef TA::detail::LazyArrayTile<Tile,array_op_type> array_tile_type;
+  typedef TA::detail::DistEval<array_tile_type, TA::DensePolicy> array_eval_type;
 
   // compute the 2-d grid of processors for the SUMMA
   // note that the result is (occ occ|uocc uocc), hence the row dimension is occ x occ, etc.
@@ -416,8 +420,8 @@ void tensor_contract_444(TA::DistArray<Tile, Policy>& tv,
   //
   pmap.reset(new TA::detail::BlockedPmap(world, trange_tv.tiles_range().volume()));
 
-  Parsec::IrregularTiledMatrix<TiledArray::detail::LazyArrayTile<Tile,array_op_type>, Policy, array_op_type>ddesc_t(t_eval, 1);
-  Parsec::IrregularTiledMatrix<TiledArray::detail::LazyArrayTile<Tile,array_op_type>, Policy, array_op_type>ddesc_v(v_eval, 1);
+  Parsec::IrregularTiledMatrix<array_tile_type, Policy, array_op_type>ddesc_t(t_eval, 1);
+  Parsec::IrregularTiledMatrix<array_tile_type, Policy, array_op_type>ddesc_v(v_eval, 1);
 
   // 'contract' object is of type
   // PaRSEC's PTG object will do the job here:
@@ -429,6 +433,10 @@ void tensor_contract_444(TA::DistArray<Tile, Policy>& tv,
       );
   Parsec::IrregularTiledMatrix<Tile, Policy, array_op_type> ddesc_tv(contract, 1);
 
+  Parsec::Summa<array_tile_type, array_tile_type, Tile, Policy, array_op_type>
+      parsec_contract(parsec.context(), PlasmaNoTrans, PlasmaNoTrans, 1.0,
+                      ddesc_t, ddesc_v, ddesc_tv);
+  
   // eval() just schedules the Summa task and proceeds
   // in expressions evaluation is lazy ... you could just use contract tiles
   // immediately to compose further (in principle even before eval()!)

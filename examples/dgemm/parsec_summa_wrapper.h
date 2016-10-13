@@ -34,36 +34,99 @@ namespace Parsec {
         void summa_destruct<std::complex<float>>(dague_handle_t * handle) {
             summa_csumma_Destruct( handle );
         }
+
+        template <typename Real, typename TileA, typename TileB, typename TileC, typename Policy, typename Op>
+        struct summa_handle_new_fct {
+            static dague_handle_t *create(PLASMA_enum transA, PLASMA_enum transB,
+                                          Real alpha,
+                                          IrregularTiledMatrix<TileA, Policy, Op> &A,
+                                          IrregularTiledMatrix<TileB, Policy, Op> &B,
+                                          IrregularTiledMatrix<TileC, Policy, Op> &C)
+            {
+                return NULL;
+            }
+        };
+
+        template <typename TileA, typename TileB, typename TileC, typename Policy, typename Op>
+        struct summa_handle_new_fct<double, TileA, TileB, TileC, Policy, Op> {
+            static dague_handle_t *create(PLASMA_enum transA, PLASMA_enum transB,
+                                          double alpha,
+                                          IrregularTiledMatrix<TileA, Policy, Op> &A,
+                                          IrregularTiledMatrix<TileB, Policy, Op> &B,
+                                          IrregularTiledMatrix<TileC, Policy, Op> &C)
+            {
+                return summa_dsumma_New(transA, transB, alpha, A.desc(), B.desc(), C.desc());
+            }
+        };
+
+        template <typename TileA, typename TileB, typename TileC, typename Policy, typename Op>
+        struct summa_handle_new_fct<float, TileA, TileB, TileC, Policy, Op> {
+            static dague_handle_t *create(PLASMA_enum transA, PLASMA_enum transB,
+                                          float alpha,
+                                          IrregularTiledMatrix<TileA, Policy, Op> &A,
+                                          IrregularTiledMatrix<TileB, Policy, Op> &B,
+                                          IrregularTiledMatrix<TileC, Policy, Op> &C)
+            {
+                return summa_ssumma_New(transA, transB, alpha, A.desc(), B.desc(), C.desc());
+            }
+        };
+
+        template <typename TileA, typename TileB, typename TileC, typename Policy, typename Op>
+        struct summa_handle_new_fct<std::complex<double>, TileA, TileB, TileC, Policy, Op> {
+            static dague_handle_t *create(PLASMA_enum transA, PLASMA_enum transB,
+                                          std::complex<double> alpha,
+                                          IrregularTiledMatrix<TileA, Policy, Op> &A,
+                                          IrregularTiledMatrix<TileB, Policy, Op> &B,
+                                          IrregularTiledMatrix<TileC, Policy, Op> &C)
+            {
+                return summa_zsumma_New(transA, transB, alpha, A.desc(), B.desc(), C.desc());
+            }
+        };
+
+        template <typename TileA, typename TileB, typename TileC, typename Policy, typename Op>
+        struct summa_handle_new_fct<std::complex<float>, TileA, TileB, TileC, Policy, Op> {
+            static dague_handle_t *create(PLASMA_enum transA, PLASMA_enum transB,
+                                          std::complex<float> alpha,
+                                          IrregularTiledMatrix<TileA, Policy, Op> &A,
+                                          IrregularTiledMatrix<TileB, Policy, Op> &B,
+                                          IrregularTiledMatrix<TileC, Policy, Op> &C)
+            {
+                return summa_csumma_New(transA, transB, alpha, A.desc(), B.desc(), C.desc());
+            }
+        };        
     }
     
-    template<typename BaseType, typename Tile, typename Policy, typename Op>
-    class Summa {
-    private:
-        dague_handle_t  *dague_handle_;
-        dague_context_t *dague_context_;
+    template<typename TileA, typename TileB, typename TileC, typename Policy, typename Op>
+    class Summa : Handle {
+    public:
+        typedef typename TileC::value_type value_type;
+        
+    protected:
+        void destruct_handle(void) {
+            summa_destruct<value_type>(dague_handle_);
+        }
 
     public:
-        Summa(dague_context_t *context) :
-            dague_context_(context),
-            dague_handle_(NULL) 
+        Summa(dague_context_t *context) : Handle(context)
         {
         }
 
         Summa(dague_context_t *context,
               PLASMA_enum transA, PLASMA_enum transB,
-              BaseType alpha,
-              IrregularTiledMatrix<Tile, Policy, Op> &A,
-              IrregularTiledMatrix<Tile, Policy, Op> &B,
-              IrregularTiledMatrix<Tile, Policy, Op> &C):
-            dague_context_(context),
-            dague_handle_(NULL)
+              value_type alpha,
+              IrregularTiledMatrix<TileA, Policy, Op> &A,
+              IrregularTiledMatrix<TileB, Policy, Op> &B,
+              IrregularTiledMatrix<TileC, Policy, Op> &C):
+            Handle(context)
         {
-            
+            dague_handle_ = summa_handle_new_fct<value_type, TileA, TileB, TileC, Policy, Op>
+                ::create(transA, transB, alpha, A, B, C);
         }
 
         ~Summa() {
-            if( NULL != dague_handle_ ) {
-                summa_destruct<typename Tile::value_type>(dague_handle_);
+            if( NULL != dague_handle_ && handle_scheduled ) {
+                summa_destruct<value_type>(dague_handle_);
+                dague_handle_ = NULL;
             }
         }
     }; // class Summa
