@@ -79,7 +79,9 @@ int main(int argc, char** argv) {
 
     // Initialize runtime
     TA::World& world = TA::initialize(argc, argv);
-    Parsec::Parsec parsec;
+    std::vector<std::string> params({ "--", "--mca", "debug_verbose", "20" });
+    std::cout<<params<<std::endl;
+    Parsec::Parsec parsec(1, params);
 
     // Get command line arguments
     if (argc < 5) {
@@ -440,8 +442,9 @@ void tensor_contract_444(Parsec::Parsec &parsec,
   // eval() just schedules the Summa task and proceeds
   // in expressions evaluation is lazy ... you could just use contract tiles
   // immediately to compose further (in principle even before eval()!)
-  contract.eval();
-
+  //contract.eval();
+  parsec_contract.run();
+  
   // since the intent of this function is to return result as a named DistArray
   // migrate contract's futures to tv here
 

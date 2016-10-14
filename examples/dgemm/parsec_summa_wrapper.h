@@ -120,7 +120,15 @@ namespace Parsec {
             Handle(context)
         {
             dague_handle_ = summa_handle_new_fct<value_type, TileA, TileB, TileC, Policy, Op>
-                ::create(transA, transB, alpha, A, B, C);
+                ::create(transA, transB, alpha, A, B, C);            
+        }
+
+        void run(void) {
+            if( NULL == dague_handle_ || NULL == dague_context_)
+                return;
+            dague_enqueue(dague_context_, dague_handle_);
+            handle_scheduled = true;
+            dague_context_wait(dague_context_);
         }
 
         ~Summa() {
