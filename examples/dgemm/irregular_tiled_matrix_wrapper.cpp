@@ -5,7 +5,7 @@ void *tilearray_future_get_tile(void *f)
 {
     void *res;
     typedef TiledArray::Tensor<double, Eigen::aligned_allocator<double> > static_tile_type;
-    typedef madness::FutureImpl<static_tile_type> static_future_type;
+    typedef madness::Future<static_tile_type> static_future_type;
     std::cout << "tilearray_future_get_tile: static casts done" << std::endl;
     static_future_type *F = reinterpret_cast <static_future_type*>(f);
     std::cout << "tilearray_future_get_tile: reintrepret cast done" << std::endl;
