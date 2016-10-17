@@ -16,6 +16,14 @@ namespace Parsec {
     public:
         typedef typename TiledArray::detail::DistEval<Tile, Policy>::trange_type trange_type; ///< Tiled range type for this object
 
+        /// @return true if all tiles are ready
+        bool probe_all() const {
+          for(const auto& t: _tiles) {
+            if (t.probe() == false) return false;
+          }
+          return true;
+        }
+
     private:
         irregular_tiled_matrix_desc_t                             _ddesc;
         std::vector< TiledArray::Future < TiledArray::Tensor< double, Eigen::aligned_allocator<double> > > > _tiles;

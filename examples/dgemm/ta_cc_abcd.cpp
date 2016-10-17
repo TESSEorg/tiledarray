@@ -425,6 +425,12 @@ void tensor_contract_444(Parsec::Parsec &parsec,
   Parsec::IrregularTiledMatrix<array_tile_type, Policy, array_op_type>ddesc_t(t_eval, 1);
   Parsec::IrregularTiledMatrix<array_tile_type, Policy, array_op_type>ddesc_v(v_eval, 1);
 
+  // test IrregularTiledMatrix ops: ensure that all argument tiles have been computed
+  // TODO remove when done testing
+  world.gop.fence();
+  assert(ddesc_t.probe_all());
+  assert(ddesc_v.probe_all());
+
   // 'contract' object is of type
   // PaRSEC's PTG object will do the job here:
   // 1. it will use t_eval and v_eval's Futures as input
@@ -434,9 +440,7 @@ void tensor_contract_444(Parsec::Parsec &parsec,
       make_contract<Tile>(4u, 4u, 4u)
       );
   Parsec::IrregularTiledMatrix<Tile, Policy, array_op_type> ddesc_tv(contract, 1);
-  
-  world.gop.fence();
-  
+
   Parsec::Summa<array_tile_type, array_tile_type, Tile, Policy, array_op_type>
       parsec_contract(parsec.context(), PlasmaNoTrans, PlasmaNoTrans, 1.0,
                       ddesc_t, ddesc_v, ddesc_tv);
