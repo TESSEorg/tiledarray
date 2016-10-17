@@ -426,9 +426,9 @@ void tensor_contract_444(Parsec::Parsec &parsec,
 
   // test IrregularTiledMatrix ops: ensure that all argument tiles have been computed
   // TODO remove when done testing
-  //  world.gop.fence();
-  //  assert(ddesc_t.probe_all());
-  //  assert(ddesc_v.probe_all());
+  world.gop.fence();
+  assert(ddesc_t.probe_all());
+  assert(ddesc_v.probe_all());
 
   // 'contract' object is of type
   // PaRSEC's PTG object will do the job here:
