@@ -90,6 +90,7 @@ namespace Parsec {
                                 // is not ready yet, Parsec will have to drive its evaluation)
                                 // let's not worry about this for now
                                 _tiles[ltile] = get_tile(de, tileid);
+                                std::cout << "Tile id " << tileid << " -> " << (void*)&_tiles[ltile] << std::endl;
                                 irregular_tiled_matrix_desc_set_data(&_ddesc, &_tiles[ltile],
                                                                      i*(tr.tiles_range().upbound_data()[1] - tr.tiles_range().lobound_data()[1]) + j,
                                                                      c*(tr.tiles_range().upbound_data()[3] - tr.tiles_range().lobound_data()[3]) + d,
