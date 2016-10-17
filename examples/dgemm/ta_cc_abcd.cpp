@@ -434,7 +434,9 @@ void tensor_contract_444(Parsec::Parsec &parsec,
       make_contract<Tile>(4u, 4u, 4u)
       );
   Parsec::IrregularTiledMatrix<Tile, Policy, array_op_type> ddesc_tv(contract, 1);
-
+  
+  world.gop.fence();
+  
   Parsec::Summa<array_tile_type, array_tile_type, Tile, Policy, array_op_type>
       parsec_contract(parsec.context(), PlasmaNoTrans, PlasmaNoTrans, 1.0,
                       ddesc_t, ddesc_v, ddesc_tv);
