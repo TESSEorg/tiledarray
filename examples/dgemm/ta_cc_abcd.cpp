@@ -80,8 +80,7 @@ int main(int argc, char** argv) {
     // Initialize runtime
     TA::World& world = TA::initialize(argc, argv);
     std::vector<std::string> params({ "--", "--mca", "debug_verbose", "20" });
-    std::cout<<params<<std::endl;
-    Parsec::Parsec parsec(1, params);
+    Parsec::Parsec parsec(params);
 
     // Get command line arguments
     if (argc < 5) {
@@ -427,9 +426,9 @@ void tensor_contract_444(Parsec::Parsec &parsec,
 
   // test IrregularTiledMatrix ops: ensure that all argument tiles have been computed
   // TODO remove when done testing
-  world.gop.fence();
-  assert(ddesc_t.probe_all());
-  assert(ddesc_v.probe_all());
+  //  world.gop.fence();
+  //  assert(ddesc_t.probe_all());
+  //  assert(ddesc_v.probe_all());
 
   // 'contract' object is of type
   // PaRSEC's PTG object will do the job here:

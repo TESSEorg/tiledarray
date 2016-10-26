@@ -47,8 +47,6 @@ namespace Parsec {
                 *p++ = strdup(s->c_str());
             }
             *p = NULL;
-            for(p = argv; *p != NULL; p++)
-                std::cout << *p << "," <<std::endl;
             dague_context_ = dague_init(nb_cores_, &argc, &argv);
             for(int a = 0; a < argc; a++)
                 free(argv[a]);
