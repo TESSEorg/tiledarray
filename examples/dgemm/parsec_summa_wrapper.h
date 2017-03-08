@@ -1,7 +1,7 @@
 #ifndef PARSEC_SUMMA_WRAPPER_H__INCLUDED
 #define PARSEC_SUMMA_WRAPPER_H__INCLUDED
 
-#include "dague.h"
+#include "parsec.h"
 #include "core_blas.h"
 #include "summa_s.h"
 #include "summa_d.h"
@@ -16,28 +16,28 @@ namespace Parsec {
 
     namespace {
         template <typename Real>
-        void summa_destruct(dague_handle_t * handle);
+        void summa_destruct(parsec_handle_t * handle);
         
         template <>
-        void summa_destruct<double>(dague_handle_t * handle) {
+        void summa_destruct<double>(parsec_handle_t * handle) {
             summa_dsumma_Destruct( handle );
         }
         template <>
-        void summa_destruct<float>(dague_handle_t * handle) {
+        void summa_destruct<float>(parsec_handle_t * handle) {
             summa_ssumma_Destruct( handle );
         }
         template <>
-        void summa_destruct<std::complex<double>>(dague_handle_t * handle) {
+        void summa_destruct<std::complex<double>>(parsec_handle_t * handle) {
             summa_zsumma_Destruct( handle );
         }
         template <>
-        void summa_destruct<std::complex<float>>(dague_handle_t * handle) {
+        void summa_destruct<std::complex<float>>(parsec_handle_t * handle) {
             summa_csumma_Destruct( handle );
         }
 
         template <typename Real, typename TileA, typename TileB, typename TileC, typename Policy, typename Op>
         struct summa_handle_new_fct {
-            static dague_handle_t *create(PLASMA_enum transA, PLASMA_enum transB,
+            static parsec_handle_t *create(PLASMA_enum transA, PLASMA_enum transB,
                                           Real alpha,
                                           IrregularTiledMatrix<TileA, Policy, Op> &A,
                                           IrregularTiledMatrix<TileB, Policy, Op> &B,
@@ -49,7 +49,7 @@ namespace Parsec {
 
         template <typename TileA, typename TileB, typename TileC, typename Policy, typename Op>
         struct summa_handle_new_fct<double, TileA, TileB, TileC, Policy, Op> {
-            static dague_handle_t *create(PLASMA_enum transA, PLASMA_enum transB,
+            static parsec_handle_t *create(PLASMA_enum transA, PLASMA_enum transB,
                                           double alpha,
                                           IrregularTiledMatrix<TileA, Policy, Op> &A,
                                           IrregularTiledMatrix<TileB, Policy, Op> &B,
@@ -61,7 +61,7 @@ namespace Parsec {
 
         template <typename TileA, typename TileB, typename TileC, typename Policy, typename Op>
         struct summa_handle_new_fct<float, TileA, TileB, TileC, Policy, Op> {
-            static dague_handle_t *create(PLASMA_enum transA, PLASMA_enum transB,
+            static parsec_handle_t *create(PLASMA_enum transA, PLASMA_enum transB,
                                           float alpha,
                                           IrregularTiledMatrix<TileA, Policy, Op> &A,
                                           IrregularTiledMatrix<TileB, Policy, Op> &B,
@@ -73,7 +73,7 @@ namespace Parsec {
 
         template <typename TileA, typename TileB, typename TileC, typename Policy, typename Op>
         struct summa_handle_new_fct<std::complex<double>, TileA, TileB, TileC, Policy, Op> {
-            static dague_handle_t *create(PLASMA_enum transA, PLASMA_enum transB,
+            static parsec_handle_t *create(PLASMA_enum transA, PLASMA_enum transB,
                                           std::complex<double> alpha,
                                           IrregularTiledMatrix<TileA, Policy, Op> &A,
                                           IrregularTiledMatrix<TileB, Policy, Op> &B,
@@ -85,7 +85,7 @@ namespace Parsec {
 
         template <typename TileA, typename TileB, typename TileC, typename Policy, typename Op>
         struct summa_handle_new_fct<std::complex<float>, TileA, TileB, TileC, Policy, Op> {
-            static dague_handle_t *create(PLASMA_enum transA, PLASMA_enum transB,
+            static parsec_handle_t *create(PLASMA_enum transA, PLASMA_enum transB,
                                           std::complex<float> alpha,
                                           IrregularTiledMatrix<TileA, Policy, Op> &A,
                                           IrregularTiledMatrix<TileB, Policy, Op> &B,
@@ -103,15 +103,15 @@ namespace Parsec {
         
     protected:
         void destruct_handle(void) {
-            summa_destruct<value_type>(dague_handle_);
+            summa_destruct<value_type>(parsec_handle_);
         }
 
     public:
-        Summa(dague_context_t *context) : Handle(context)
+        Summa(parsec_context_t *context) : Handle(context)
         {
         }
 
-        Summa(dague_context_t *context,
+        Summa(parsec_context_t *context,
               PLASMA_enum transA, PLASMA_enum transB,
               value_type alpha,
               IrregularTiledMatrix<TileA, Policy, Op> &A,
@@ -119,22 +119,22 @@ namespace Parsec {
               IrregularTiledMatrix<TileC, Policy, Op> &C):
             Handle(context)
         {
-            dague_handle_ = summa_handle_new_fct<value_type, TileA, TileB, TileC, Policy, Op>
+            parsec_handle_ = summa_handle_new_fct<value_type, TileA, TileB, TileC, Policy, Op>
                 ::create(transA, transB, alpha, A, B, C);            
         }
 
         void run(void) {
-            if( NULL == dague_handle_ || NULL == dague_context_)
+            if( NULL == parsec_handle_ || NULL == parsec_context_)
                 return;
-            dague_enqueue(dague_context_, dague_handle_);
+            parsec_enqueue(parsec_context_, parsec_handle_);
             handle_scheduled = true;
-            dague_context_wait(dague_context_);
+            parsec_context_wait(parsec_context_);
         }
 
         ~Summa() {
-            if( NULL != dague_handle_ && handle_scheduled ) {
-                summa_destruct<value_type>(dague_handle_);
-                dague_handle_ = NULL;
+            if( NULL != parsec_handle_ && handle_scheduled ) {
+                summa_destruct<value_type>(parsec_handle_);
+                parsec_handle_ = NULL;
             }
         }
     }; // class Summa

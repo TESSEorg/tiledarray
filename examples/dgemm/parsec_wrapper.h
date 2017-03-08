@@ -1,42 +1,42 @@
 #ifndef PARSEC_WRAPPER_H__INCLUDED
 #define PARSEC_WRAPPER_H__INCLUDED
 
-#include "dague.h"
-#include "dague/class/dague_object.h"
+#include "parsec.h"
+#include "parsec/class/parsec_object.h"
 
 #include <tiledarray.h>
 
 namespace Parsec {
     class Handle {
     protected:
-        dague_handle_t  *dague_handle_;
-        dague_context_t *dague_context_;
+        parsec_handle_t  *parsec_handle_;
+        parsec_context_t *parsec_context_;
         bool             handle_scheduled;
 
     public:
-        Handle(dague_context_t *context) :
-            dague_context_(context),
-            dague_handle_(NULL),
+        Handle(parsec_context_t *context) :
+            parsec_context_(context),
+            parsec_handle_(NULL),
             handle_scheduled(false)
         {
         }
 
         ~Handle() {
-            if( NULL != dague_handle_ ) {
+            if( NULL != parsec_handle_ ) {
                 /** For a reason, probably because it was not
                  *  scheduled, the handle was not destructed by
                  *  the specialized class. Try to memory collect
-                 *  using generic dague destructor */
-                OBJ_RELEASE(dague_handle_);
+                 *  using generic parsec destructor */
+                OBJ_RELEASE(parsec_handle_);
             }
-            dague_handle_ = NULL;
-            dague_context_ = NULL;
+            parsec_handle_ = NULL;
+            parsec_context_ = NULL;
         }
     };
     
     class Parsec {
     private:
-        dague_context_t *dague_context_;
+        parsec_context_t *parsec_context_;
         int              nb_cores_;
         void initialize(std::vector<std::string> &v) {
             int argc = v.size();
@@ -47,7 +47,7 @@ namespace Parsec {
                 *p++ = strdup(s->c_str());
             }
             *p = NULL;
-            dague_context_ = dague_init(nb_cores_, &argc, &argv);
+            parsec_context_ = parsec_init(nb_cores_, &argc, &argv);
             for(int a = 0; a < argc; a++)
                 free(argv[a]);
             delete[] argv;
@@ -73,12 +73,15 @@ namespace Parsec {
             initialize(v);
         }
 
-        dague_context_t *context(void) {
-            return dague_context_;
+        parsec_context_t *context(void) {
+            return parsec_context_;
+        }
+
+        void Finalize(void) {
+            parsec_fini(&parsec_context_);
         }
         
         ~Parsec() {
-            dague_fini(&dague_context_);
         }
     }; // class Parsec
     

@@ -147,6 +147,7 @@ int main(int argc, char** argv) {
     else
         cc_abcd<double>(parsec, world, trange_occ, trange_uocc, repeat);
 
+    parsec.Finalize();
     TA::finalize();
 
   } catch(TA::Exception& e) {

@@ -5,9 +5,7 @@
 
 #include <tiledarray.h>
 
-extern "C" {
-    void *tilearray_future_get_tile(void *f);
-}
+extern "C" void *tilearray_future_get_tile(void *f);
 
 namespace Parsec {
     
@@ -90,17 +88,19 @@ namespace Parsec {
                                 // is not ready yet, Parsec will have to drive its evaluation)
                                 // let's not worry about this for now
                                 _tiles[ltile] = get_tile(de, tileid);
-                                irregular_tiled_matrix_desc_set_data(&_ddesc, &_tiles[ltile],
-                                                                     i*(tr.tiles_range().upbound_data()[1] - tr.tiles_range().lobound_data()[1]) + j,
-                                                                     c*(tr.tiles_range().upbound_data()[3] - tr.tiles_range().lobound_data()[3]) + d,
+                                uint32_t idx = _ddesc.super.data_key(&_ddesc.super,
+                                      i*(tr.tiles_range().upbound_data()[1] - tr.tiles_range().lobound_data()[1]) + j,
+                                      c*(tr.tiles_range().upbound_data()[3] - tr.tiles_range().lobound_data()[3]) + d);
+                                irregular_tiled_matrix_desc_set_data(&_ddesc, &_tiles[ltile], idx,
                                                                      mbs[i*(tr.tiles_range().upbound_data()[1]-tr.tiles_range().lobound_data()[1])+j],
                                                                      nbs[c*(tr.tiles_range().upbound_data()[3]-tr.tiles_range().lobound_data()[3])+d],
                                                                      0, de.world().rank());
                                 ltile++;
                             } else {
-                                irregular_tiled_matrix_desc_set_data(&_ddesc, NULL, 
-                                                                     i*(tr.tiles_range().upbound_data()[1] - tr.tiles_range().lobound_data()[1]) + j,
-                                                                     c*(tr.tiles_range().upbound_data()[3] - tr.tiles_range().lobound_data()[3]) + d,
+                                uint32_t idx = _ddesc.super.data_key(&_ddesc.super,
+                                      i*(tr.tiles_range().upbound_data()[1] - tr.tiles_range().lobound_data()[1]) + j,
+                                      c*(tr.tiles_range().upbound_data()[3] - tr.tiles_range().lobound_data()[3]) + d);
+                                irregular_tiled_matrix_desc_set_data(&_ddesc, NULL, idx,
                                                                      mbs[i*(tr.tiles_range().upbound_data()[1]-tr.tiles_range().lobound_data()[1])+j],
                                                                      nbs[c*(tr.tiles_range().upbound_data()[3]-tr.tiles_range().lobound_data()[3])+d],
                                                                      0, de.world().rank());
