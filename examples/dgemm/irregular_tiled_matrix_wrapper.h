@@ -81,6 +81,9 @@ namespace Parsec {
                         for(int d = tr.tiles_range().lobound_data()[3]; d < tr.tiles_range().upbound_data()[3]; d++) {
                             idx[3] = d;
                             std::size_t tileid = tr.tiles_range().ordinal(idx);
+                            int imat = i*(tr.tiles_range().upbound_data()[1] - tr.tiles_range().lobound_data()[1]) + j;
+                            int jmat = c*(tr.tiles_range().upbound_data()[3] - tr.tiles_range().lobound_data()[3]) + d;
+                            uint32_t idx = _ddesc.super.data_key(&_ddesc.super, imat, jmat);
                             if( de.world().rank() == de.pmap()->owner(tileid) ) {
                                 // N.B. this can potentially schedule work if tiles are lazy
                                 // since there is no way for Parsec to drive this computation
@@ -88,22 +91,16 @@ namespace Parsec {
                                 // is not ready yet, Parsec will have to drive its evaluation)
                                 // let's not worry about this for now
                                 _tiles[ltile] = get_tile(de, tileid);
-                                uint32_t idx = _ddesc.super.data_key(&_ddesc.super,
-                                      i*(tr.tiles_range().upbound_data()[1] - tr.tiles_range().lobound_data()[1]) + j,
-                                      c*(tr.tiles_range().upbound_data()[3] - tr.tiles_range().lobound_data()[3]) + d);
                                 irregular_tiled_matrix_desc_set_data(&_ddesc, &_tiles[ltile], idx,
-                                                                     mbs[i*(tr.tiles_range().upbound_data()[1]-tr.tiles_range().lobound_data()[1])+j],
-                                                                     nbs[c*(tr.tiles_range().upbound_data()[3]-tr.tiles_range().lobound_data()[3])+d],
-                                                                     0, de.world().rank());
+                                                                     mbs[imat],
+                                                                     nbs[jmat],
+                                                                     0, de.pmap()->owner(tileid));
                                 ltile++;
                             } else {
-                                uint32_t idx = _ddesc.super.data_key(&_ddesc.super,
-                                      i*(tr.tiles_range().upbound_data()[1] - tr.tiles_range().lobound_data()[1]) + j,
-                                      c*(tr.tiles_range().upbound_data()[3] - tr.tiles_range().lobound_data()[3]) + d);
                                 irregular_tiled_matrix_desc_set_data(&_ddesc, NULL, idx,
-                                                                     mbs[i*(tr.tiles_range().upbound_data()[1]-tr.tiles_range().lobound_data()[1])+j],
-                                                                     nbs[c*(tr.tiles_range().upbound_data()[3]-tr.tiles_range().lobound_data()[3])+d],
-                                                                     0, de.world().rank());
+                                                                     mbs[imat],
+                                                                     nbs[jmat],
+                                                                     0, de.pmap()->owner(tileid));
                             }
                         }
                     }
