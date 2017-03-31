@@ -9,7 +9,7 @@
 #include "summa_z.h"
 
 #include "irregular_tiled_matrix_wrapper.h"
-
+#include <madness/world/parsec_madness.h>
 #include <tiledarray.h>
 
 namespace Parsec {
@@ -126,9 +126,27 @@ namespace Parsec {
         void run(void) {
             if( NULL == parsec_handle_ || NULL == parsec_context_)
                 return;
-            parsec_enqueue(parsec_context_, parsec_handle_);
-            handle_scheduled = true;
+            /*
+            parsec_handle_t *madness_handle = &madness::madness_handle;
+            int remaining = parsec_atomic_add_32b(&madness_handle->nb_tasks, -1);
+            parsec_check_complete_cb(madness_handle, parsec_context_, remaining);
             parsec_context_wait(parsec_context_);
+            std::cout << "Completed MADNESS context" << std::endl;
+            */
+            parsec_enqueue(parsec_context_, parsec_handle_);
+            parsec_context_start(parsec_context_);
+            handle_scheduled = true;
+            parsec_ptg_handle_wait(parsec_context_, parsec_handle_);
+            std::cout << "Completed SUMMA context" << std::endl;
+            /*
+            if( 0 != parsec_enqueue(parsec_context_, madness_handle) ) {
+                std::cerr << "ERROR: parsec_enqueue!!" << std::endl;
+            }
+            parsec_atomic_add_32b(&madness_handle->nb_tasks, 1);
+            if( 0 != parsec_context_start(parsec_context_) ) {
+                std::cerr << "ERROR: parsec_context_start!!" << std::endl;
+            }
+            */
         }
 
         ~Summa() {
