@@ -20,7 +20,7 @@
 #include <iostream>
 #include <tiledarray.h>
 #include <TiledArray/version.h>
-#include "parsec_wrapper.h"
+#include <madness/world/parsec_wrapper.h>
 #include "parsec_summa_wrapper.h"
 #include "irregular_tiled_matrix_wrapper.h"
 
@@ -58,7 +58,7 @@ make_tiling(unsigned int range_size,
 // as an explicit SUMMA
 // can be extended to handle permutations, etc.
 template <typename Tile, typename Policy>
-void tensor_contract_444(Parsec::Parsec &parsec,
+void tensor_contract_444(Parsec::Parsec *parsec,
                          TA::DistArray<Tile, Policy>& tv,
                          const TA::DistArray<Tile, Policy>& t,
                          const TA::DistArray<Tile, Policy>& v);
@@ -67,7 +67,7 @@ template <typename Tile, typename Policy>
 void rand_fill_array(TA::DistArray<Tile, Policy>& array);
 
 template <typename T>
-void cc_abcd(Parsec::Parsec &parsec,
+void cc_abcd(Parsec::Parsec *parsec,
              madness::World& world,
              const TA::TiledRange1& trange_occ,
              const TA::TiledRange1& trange_uocc, long repeat);
@@ -75,12 +75,31 @@ void cc_abcd(Parsec::Parsec &parsec,
 int main(int argc, char** argv) {
   int rc = 0;
 
+  {
+      std::cout << "gdb -p " << getpid() << std::endl;
+      volatile int loop = 1;
+      while(loop) {
+          sleep(1);
+      }
+  }
+  
   try {
 
     // Initialize runtime
     TA::World& world = TA::initialize(argc, argv);
-    std::vector<std::string> params({ "--", "--mca", "debug_verbose", "20" });
-    Parsec::Parsec parsec(params);
+    bool parsec_initialized_by_madness = true;
+    Parsec::Parsec *parsec = NULL;
+#if HAVE_PARSEC
+    parsec = madness::ThreadPool::parsec;
+#else
+#warning will initialize PaRSEC because madness was compiled without it
+#endif
+    if( NULL == parsec ) {
+        // madness did not initialize parsec, it's using another scheduler for its tasks
+        std::vector<std::string> params({ "--", "--mca", "debug_verbose", "20" });
+        parsec = new Parsec::Parsec(params);
+        parsec_initialized_by_madness = false;
+    }
 
     // Get command line arguments
     if (argc < 5) {
@@ -147,7 +166,10 @@ int main(int argc, char** argv) {
     else
         cc_abcd<double>(parsec, world, trange_occ, trange_uocc, repeat);
 
-    parsec.Finalize();
+    if( ! parsec_initialized_by_madness ) {
+        parsec->Finalize();
+        delete(parsec);
+    }
     TA::finalize();
 
   } catch(TA::Exception& e) {
@@ -171,7 +193,7 @@ int main(int argc, char** argv) {
 }
 
 template <typename T>
-void cc_abcd(Parsec::Parsec &parsec,
+void cc_abcd(Parsec::Parsec *parsec,
              TA::World& world,
              const TA::TiledRange1& trange_occ,
              const TA::TiledRange1& trange_uocc, long repeat) {
@@ -376,7 +398,7 @@ void iterate_dimension(TiledArray::Range range, std::vector<std::size_t> &idx, i
 }
 
 template <typename Tile, typename Policy>
-void tensor_contract_444(Parsec::Parsec &parsec,
+void tensor_contract_444(Parsec::Parsec *parsec,
                          TA::DistArray<Tile, Policy>& tv,
                          const TA::DistArray<Tile, Policy>& t,
                          const TA::DistArray<Tile, Policy>& v) {
@@ -444,7 +466,7 @@ void tensor_contract_444(Parsec::Parsec &parsec,
       contract.get(index).set(trange_tv.make_tile_range(index));
   }
   Parsec::Summa<array_tile_type, array_tile_type, Tile, Policy, array_op_type>
-      parsec_contract(parsec.context(), PlasmaNoTrans, PlasmaNoTrans, 1.0,
+      parsec_contract(parsec->context(), PlasmaNoTrans, PlasmaNoTrans, 1.0,
                       ddesc_t, ddesc_v, ddesc_tv);
   
   // eval() just schedules the Summa task and proceeds
