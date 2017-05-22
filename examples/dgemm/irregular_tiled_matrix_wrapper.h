@@ -5,7 +5,7 @@
 
 #include <tiledarray.h>
 
-extern "C" void *tilearray_future_get_tile(void *f);
+extern "C" void *tilearray_future_get_tile(void *f, void *_context, void *_task);
 
 namespace Parsec {
     
