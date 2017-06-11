@@ -475,9 +475,9 @@ namespace TiledArray {
               continue;
           }
           Future<value_type> tile = pimpl_->world().taskq.add(
-              [] (DistArray_& array, const size_type index, const Op& op) -> value_type
-              { return op(array.trange().make_tile_range(index)); },
-              *this, index, op);
+              [] (DistArray_* array, const size_type index, const Op& op) -> value_type
+              { return op(array->trange().make_tile_range(index)); },
+              this, index, op);
           set(index, tile);
         }
       }
@@ -686,7 +686,7 @@ namespace TiledArray {
       check_pimpl();
       if((! pimpl_->pmap()->is_replicated()) && (world().size() > 1)) {
         // Construct a replicated array
-        std::shared_ptr<pmap_interface> pmap(new detail::ReplicatedPmap(world(), size()));
+        std::shared_ptr<pmap_interface> pmap = std::make_shared<detail::ReplicatedPmap>(world(), size());
         DistArray_ result = DistArray_(world(), trange(), shape(), pmap);
 
         // Create the replicator object that will do an all-to-all broadcast of
